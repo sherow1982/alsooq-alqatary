@@ -1,0 +1,267 @@
+name: 🎥 إضافة فيديو
+
+on:
+  workflow_dispatch:
+    inputs:
+      product_slug:
+        description: 'اسم ملف المنتج (عربي أو إنجليزي، بدون .html)'
+        required: true
+        type: string
+      video_url:
+        description: 'رابط الفيديو (أي رابط YouTube/Vimeo/TikTok)'
+        required: true
+        type: string
+
+jobs:
+  add-video:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install beautifulsoup4 lxml
+
+      - name: Add Video to Product
+        env:
+          PRODUCT_SLUG: ${{ github.event.inputs.product_slug }}
+          VIDEO_URL: ${{ github.event.inputs.video_url }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import re
+          import urllib.parse
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+          
+          slug = os.environ['PRODUCT_SLUG']
+          video_url = os.environ['VIDEO_URL']
+          
+          # 🔄 تحويل الرابط العادي إلى embed
+          def convert_to_embed(url):
+              """تحويل روابط الفيديو إلى embed"""
+              
+              # YouTube - كل الأشكال
+              youtube_patterns = [
+                  r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+                  r'youtube\.com\/embed\/([a-zA-Z0-9_-]{11})',
+                  r'youtube\.com\/v\/([a-zA-Z0-9_-]{11})',
+                  r'youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})'
+              ]
+              
+              for pattern in youtube_patterns:
+                  match = re.search(pattern, url)
+                  if match:
+                      video_id = match.group(1)
+                      return f"https://www.youtube.com/embed/{video_id}"
+              
+              # Vimeo
+              vimeo_match = re.search(r'vimeo\.com\/(\d+)', url)
+              if vimeo_match:
+                  video_id = vimeo_match.group(1)
+                  return f"https://player.vimeo.com/video/{video_id}"
+              
+              # TikTok
+              tiktok_match = re.search(r'tiktok\.com\/.*\/video\/(\d+)', url)
+              if tiktok_match:
+                  video_id = tiktok_match.group(1)
+                  return f"https://www.tiktok.com/embed/v2/{video_id}"
+              
+              # Dailymotion
+              dailymotion_match = re.search(r'dailymotion\.com\/video\/([a-zA-Z0-9]+)', url)
+              if dailymotion_match:
+                  video_id = dailymotion_match.group(1)
+                  return f"https://www.dailymotion.com/embed/video/{video_id}"
+              
+              # لو الرابط embed بالفعل
+              if 'embed' in url or 'player' in url:
+                  return url
+              
+              return url
+          
+          # 🔍 البحث الذكي في كل الريبو (مع دعم العربي)
+          def find_product_file(slug):
+              """البحث عن ملف المنتج في كل مكان - يدعم الأسماء العربية"""
+              
+              # تنظيف الـ slug
+              slug_clean = slug.strip()
+              
+              # البحث عن كل ملفات HTML في الريبو
+              all_html_files = list(Path('.').rglob("*.html"))
+              
+              # استثناء المجلدات غير المرغوبة
+              excluded_dirs = {'.git', 'node_modules', '.github', '__pycache__', 'vendor', 'dist', 'build'}
+              
+              # تصفية الملفات
+              valid_files = []
+              for file in all_html_files:
+                  # استثناء المجلدات
+                  if any(excl in file.parts for excl in excluded_dirs):
+                      continue
+                  
+                  # الحصول على اسم الملف بدون امتداد
+                  filename_without_ext = file.stem
+                  
+                  # مقارنة مباشرة
+                  if filename_without_ext == slug_clean:
+                      valid_files.append(file)
+                      continue
+                  
+                  # مقارنة مع URL encoding للعربي
+                  try:
+                      decoded_filename = urllib.parse.unquote(filename_without_ext)
+                      if decoded_filename == slug_clean:
+                          valid_files.append(file)
+                          continue
+                  except:
+                      pass
+                  
+                  # مقارنة مع URL encoded slug
+                  try:
+                      encoded_slug = urllib.parse.quote(slug_clean)
+                      if filename_without_ext == encoded_slug:
+                          valid_files.append(file)
+                  except:
+                      pass
+              
+              if valid_files:
+                  # إذا وجد أكثر من ملف، اختر الأقرب للـ root
+                  valid_files.sort(key=lambda x: len(x.parts))
+                  return str(valid_files[0])
+              
+              return None
+          
+          # تحويل الرابط
+          embed_url = convert_to_embed(video_url)
+          print(f"🔗 الرابط الأصلي: {video_url}")
+          print(f"✅ رابط Embed: {embed_url}")
+          
+          # البحث عن الملف
+          print(f"\n🔍 البحث عن: {slug}")
+          product_file = find_product_file(slug)
+          
+          if not product_file:
+              print(f"\n❌ لم يتم العثور على الملف")
+              print(f"💡 تأكد من كتابة اسم الملف بشكل صحيح (بدون .html)")
+              print(f"   بحثت عن: {slug}")
+              
+              # عرض بعض الملفات الموجودة كمساعدة
+              print(f"\n📁 بعض الملفات HTML الموجودة:")
+              all_html = list(Path('.').rglob("*.html"))
+              excluded = {'.git', 'node_modules', '.github'}
+              shown = 0
+              for f in all_html:
+                  if not any(e in f.parts for e in excluded) and shown < 10:
+                      print(f"   - {f.stem}")
+                      shown += 1
+              
+              exit(1)
+          
+          print(f"✅ تم العثور على الملف في: {product_file}")
+          
+          # قراءة الملف
+          with open(product_file, 'r', encoding='utf-8') as f:
+              soup = BeautifulSoup(f.read(), 'html.parser')
+          
+          # التحقق من وجود الفيديو
+          existing_video = soup.find('iframe', src=lambda x: x and (embed_url in x or video_url in x))
+          if existing_video:
+              print("\n⚠️ الفيديو موجود بالفعل في هذه الصفحة")
+              print("✅ لا حاجة لإضافته مرة أخرى")
+              exit(0)
+          
+          # إنشاء عنصر الفيديو
+          video_html = f'''
+          <div class="product-video" style="margin: 25px 0;">
+              <h3 style="font-size: 1.5rem; margin-bottom: 15px; color: #2c3e50; font-weight: 600;">🎥 فيديو المنتج</h3>
+              <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background: #000;">
+                  <iframe 
+                      src="{embed_url}" 
+                      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;"
+                      frameborder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                      allowfullscreen
+                      loading="lazy">
+                  </iframe>
+              </div>
+          </div>
+          '''
+          
+          # البحث عن المكان المناسب (بترتيب الأولوية)
+          selectors = [
+              # قسم الوصف
+              ('div', {'class': 'product-description'}),
+              ('div', {'class': 'description'}),
+              ('div', {'class': 'product-desc'}),
+              
+              # قسم التفاصيل
+              ('section', {'class': 'product-details'}),
+              ('section', {'class': 'details'}),
+              ('div', {'class': 'product-details'}),
+              
+              # المحتوى
+              ('div', {'class': 'product-content'}),
+              ('div', {'class': 'content'}),
+              ('div', {'class': 'product-info'}),
+              
+              # عناصر عامة
+              ('article', {'class': 'product'}),
+              ('article', {}),
+              ('main', {}),
+              
+              # الحاويات
+              ('div', {'class': 'container'}),
+              ('div', {'class': 'wrapper'}),
+              
+              # آخر خيار
+              ('body', {})
+          ]
+          
+          insertion_point = None
+          selected_selector = None
+          
+          for tag, attrs in selectors:
+              if attrs:
+                  element = soup.find(tag, attrs)
+              else:
+                  element = soup.find(tag)
+              
+              if element:
+                  insertion_point = element
+                  selected_selector = f"<{tag} {' '.join(f'{k}=\"{v}\"' for k, v in attrs.items()) if attrs else ''}>"
+                  break
+          
+          if insertion_point:
+              print(f"📍 سيتم الإضافة في: {selected_selector}")
+              
+              video_tag = BeautifulSoup(video_html, 'html.parser')
+              insertion_point.insert(0, video_tag)
+              
+              with open(product_file, 'w', encoding='utf-8') as f:
+                  f.write(str(soup.prettify()))
+              
+              print(f"\n✅ تم إضافة الفيديو بنجاح!")
+              print(f"📄 الملف: {product_file}")
+              print(f"🎬 الفيديو: {embed_url}")
+          else:
+              print("\n❌ لم يتم العثور على مكان مناسب للفيديو")
+              print("💡 بنية HTML في الملف غير قياسية")
+              print("🔧 يمكنك تعديل selectors في الكود لتناسب بنية موقعك")
+              exit(1)
+          EOF
+
+      - name: Commit Changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "🎥 إضافة فيديو: ${{ github.event.inputs.product_slug }}"
+          git push
