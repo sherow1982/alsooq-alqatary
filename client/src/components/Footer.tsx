@@ -1,8 +1,23 @@
 import { Heart, Mail, Phone, MapPin } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState("");
+  const { toast } = useToast();
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      toast({
+        title: "تم الاشتراك بنجاح",
+        description: `سنرسل لك العروض والتحديثات على ${email}`,
+      });
+      setEmail("");
+    }
+  };
 
   return (
     <footer className="bg-gradient-to-b from-background to-muted/50 border-t border-border">
@@ -85,7 +100,9 @@ export default function Footer() {
             <h4 className="font-bold text-foreground mb-4">تواصل معنا</h4>
             <div className="space-y-3">
               <a
-                href="tel:+201110760081"
+                href="https://wa.me/201110760081"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm"
               >
                 <Phone className="w-4 h-4" />
@@ -147,16 +164,19 @@ export default function Footer() {
 
           <div>
             <h4 className="font-bold text-foreground mb-4">اشترك في النشرة البريدية</h4>
-            <div className="flex gap-2">
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
               <input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="بريدك الإلكتروني"
+                required
                 className="flex-1 px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
               />
-              <button className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-all text-sm whitespace-nowrap">
+              <button type="submit" className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-all text-sm whitespace-nowrap">
                 اشترك
               </button>
-            </div>
+            </form>
           </div>
         </div>
       </div>
