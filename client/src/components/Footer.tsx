@@ -109,11 +109,11 @@ export default function Footer() {
                 <span dir="ltr">+20 111 076 0081</span>
               </a>
               <a
-                href="mailto:info@qatarstore.com"
+                href="mailto:sherow1982@gmail.com"
                 className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm"
               >
                 <Mail className="w-4 h-4" />
-                <span>info@qatarstore.com</span>
+                <span>sherow1982@gmail.com</span>
               </a>
               <div className="flex items-center gap-2 text-muted-foreground text-sm">
                 <MapPin className="w-4 h-4" />
