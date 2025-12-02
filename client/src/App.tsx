@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Router as WouterRouter } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -16,21 +16,26 @@ import Checkout from "./pages/Checkout";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import ReturnPolicy from "./pages/ReturnPolicy";
 
+// GitHub Pages base path
+const base = "/alsooq-alqatary";
+
 function Router() {
   return (
-    <CartProvider>
-      <Switch>
-        <Route path={"/"} component={Home} />
-        <Route path={"/product/:slug"} component={ProductDetail} />
-        <Route path={"/cart"} component={Cart} />
-        <Route path={"/checkout"} component={Checkout} />
-        <Route path={"/shipping-policy"} component={ShippingPolicy} />
-        <Route path={"/return-policy"} component={ReturnPolicy} />
-        <Route path={"/404"} component={NotFound} />
-        {/* Final fallback route */}
-        <Route component={NotFound} />
-      </Switch>
-    </CartProvider>
+    <WouterRouter base={base}>
+      <CartProvider>
+        <Switch>
+          <Route path={"/"} component={Home} />
+          <Route path={"/product/:slug"} component={ProductDetail} />
+          <Route path={"/cart"} component={Cart} />
+          <Route path={"/checkout"} component={Checkout} />
+          <Route path={"/shipping-policy"} component={ShippingPolicy} />
+          <Route path={"/return-policy"} component={ReturnPolicy} />
+          <Route path={"/404"} component={NotFound} />
+          {/* Final fallback route */}
+          <Route component={NotFound} />
+        </Switch>
+      </CartProvider>
+    </WouterRouter>
   );
 }
 
