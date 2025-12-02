@@ -1,103 +1,160 @@
-import { Star, ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart, Eye, Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import productsData from "@/data/products.json";
+import { Product, transformProduct, slugify, getBadgeColor } from "@/types/product";
 import { Link } from "wouter";
-import { Product, transformProduct, DisplayProduct, slugify } from "@/types/product";
-
-// Transform all products from JSON to display format
-const products: DisplayProduct[] = (productsData as Product[]).map(transformProduct);
+import { useCart } from "@/context/CartContext";
+import { useState } from "react";
 
 export default function FeaturedProducts() {
+  const { addToCart } = useCart();
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
+
+  // Get featured products (first 8)
+  const featuredProducts = (productsData as Product[])
+    .slice(0, 8)
+    .map(transformProduct);
+
   return (
     <section id="products" className="py-20 bg-background">
-      <div className="container">
+      <div className="container mx-auto px-4">
         {/* Section Header */}
-        <div className="text-center mb-16 fade-in-up">
-          <h2 className="text-4xl lg:text-5xl font-bold text-primary mb-4">
-            المنتجات المميزة
+        <div className="text-center mb-16 space-y-4">
+          <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
+            منتجات مختارة
+          </span>
+          <h2 className="text-4xl lg:text-5xl font-bold">
+            الأكثر مبيعاً
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            اختر من أفضل المنتجات المختارة بعناية والتي تحظى بأعلى التقييمات
+            اكتشف مجموعتنا الحصرية من المنتجات الفاخرة والأكثر رواجاً
           </p>
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-          {products.map((product, index) => (
-            <Link key={product.id} href={`/product/${slugify(product.name)}`}>
-              <div
-                className="fade-in-up hover-lift group cursor-pointer"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="bg-white rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-300 h-full flex flex-col">
-                  {/* Image Container */}
-                  <div className="relative overflow-hidden h-64 bg-muted">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-
-                    {/* Badge */}
-                    <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold">
-                      {product.badge}
-                    </div>
-
-                    {/* Wishlist button */}
-                    <button className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100">
-                      <Heart className="w-5 h-5 text-primary" />
-                    </button>
-
-                    {/* Quick add button */}
-                    <button className="absolute bottom-0 left-0 right-0 bg-primary text-primary-foreground py-3 font-bold flex items-center justify-center gap-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                      <ShoppingCart className="w-5 h-5" />
-                      أضف للسلة
-                    </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+          {featuredProducts.map((product) => (
+            <div
+              key={product.id}
+              className="group relative bg-white rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-border/50"
+              onMouseEnter={() => setHoveredId(product.id)}
+              onMouseLeave={() => setHoveredId(null)}
+            >
+              {/* Product Image */}
+              <Link href={`/product/${slugify(product.name)}`}>
+                <div className="relative aspect-square bg-muted overflow-hidden">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  
+                  {/* Badge */}
+                  <div className={`absolute top-3 right-3 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg ${getBadgeColor(product.badge)}`}>
+                    {product.badge}
                   </div>
 
-                  {/* Content */}
-                  <div className="p-4 flex-1 flex flex-col">
-                    <h3 className="text-lg font-bold text-foreground mb-2 line-clamp-2">
-                      {product.name}
-                    </h3>
-
-                    {/* Rating */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-4 h-4 fill-accent text-accent"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        ({product.reviews})
-                      </span>
+                  {/* Discount */}
+                  {product.originalPrice > product.price && (
+                    <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                      -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
                     </div>
+                  )}
 
-                    {/* Price */}
-                    <div className="flex items-center gap-3 mt-auto">
+                  {/* Quick Actions Overlay */}
+                  <div 
+                    className={`absolute inset-0 bg-black/40 flex items-center justify-center gap-2 transition-opacity duration-300 ${
+                      hoveredId === product.id ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  >
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-transform"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        addToCart(product);
+                      }}
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                    </Button>
+                    <Link href={`/product/${slugify(product.name)}`}>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-transform"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-transform"
+                    >
+                      <Heart className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Product Info */}
+              <div className="p-4 space-y-3">
+                {/* Rating */}
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${
+                        i < Math.floor(product.rating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'fill-muted text-muted'
+                      }`}
+                    />
+                  ))}
+                  <span className="text-xs text-muted-foreground mr-1">({product.reviews})</span>
+                </div>
+
+                {/* Product Name */}
+                <Link href={`/product/${slugify(product.name)}`}>
+                  <h3 className="font-bold text-foreground line-clamp-2 hover:text-primary transition-colors leading-tight min-h-[2.5rem]">
+                    {product.name}
+                  </h3>
+                </Link>
+
+                {/* Price */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-bold text-primary">
-                        {product.price} ر.ق
+                        {product.price}
                       </span>
+                      <span className="text-sm text-primary">ر.ق</span>
+                    </div>
+                    {product.originalPrice > product.price && (
                       <span className="text-sm text-muted-foreground line-through">
                         {product.originalPrice} ر.ق
                       </span>
-                    </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Quick Buy Button */}
+                <Button
+                  className="w-full h-11 font-bold gap-2 group/btn"
+                  onClick={() => addToCart(product)}
+                >
+                  <ShoppingCart className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+                  أضف للسلة
+                </Button>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
 
         {/* View All Button */}
-        <div className="text-center mt-12 fade-in-up">
-          <Button
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-bold text-base px-8 h-14"
-          >
+        <div className="text-center mt-16">
+          <Button size="lg" variant="outline" className="h-14 px-12 text-lg font-bold border-2">
             عرض جميع المنتجات
           </Button>
         </div>
