@@ -13,6 +13,7 @@ module.exports = defineConfig({
         },
     },
     root: "client",
+    base: '/alsooq-alqatary/',
     build: {
         outDir: "../dist",
         emptyOutDir: true,
