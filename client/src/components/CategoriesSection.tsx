@@ -1,60 +1,60 @@
-import { Smartphone, Heart, Home, Sparkles, Zap, ShoppingBag } from "lucide-react";
+import { Smartphone, Heart, Home, Sparkles, Zap, Car } from "lucide-react";
 
 const categories = [
   {
     id: 1,
-    name: "العناية الصحية",
-    description: "أجهزة طبية ومنتجات العناية",
+    name: "العناية الصحية والتجميل",
+    description: "أجهزة ومنتجات عناية وتجميل",
     icon: Heart,
     color: "from-red-500 to-pink-500",
-    count: 24,
+    count: 8,
   },
   {
     id: 2,
-    name: "الإلكترونيات",
-    description: "أجهزة ذكية ومبتكرة",
-    icon: Smartphone,
-    color: "from-blue-500 to-cyan-500",
-    count: 18,
-  },
-  {
-    id: 3,
     name: "المنزل والمطبخ",
     description: "أدوات منزلية عملية",
     icon: Home,
     color: "from-green-500 to-emerald-500",
-    count: 32,
+    count: 2,
   },
   {
-    id: 4,
-    name: "العناية الشخصية",
-    description: "منتجات التجميل والعناية",
-    icon: Sparkles,
-    color: "from-purple-500 to-pink-500",
-    count: 15,
-  },
-  {
-    id: 5,
+    id: 3,
     name: "الأجهزة الكهربائية",
     description: "أجهزة منزلية حديثة",
     icon: Zap,
     color: "from-yellow-500 to-orange-500",
-    count: 28,
+    count: 2,
+  },
+  {
+    id: 4,
+    name: "الإلكترونيات",
+    description: "أجهزة ذكية ومبتكرة",
+    icon: Smartphone,
+    color: "from-blue-500 to-cyan-500",
+    count: 1,
+  },
+  {
+    id: 5,
+    name: "إكسسوارات السيارات",
+    description: "منتجات عملية لسيارتك",
+    icon: Car,
+    color: "from-purple-500 to-pink-500",
+    count: 1,
   },
   {
     id: 6,
     name: "منتجات متنوعة",
-    description: "اكتشف المزيد من المنتجات",
-    icon: ShoppingBag,
+    description: "اكتشف المزيد",
+    icon: Sparkles,
     color: "from-indigo-500 to-purple-500",
-    count: 45,
+    count: 1,
   },
 ];
 
 export default function CategoriesSection() {
   return (
     <section id="categories" className="py-20 bg-gradient-to-b from-background via-muted/30 to-background">
-      <div className="container">
+      <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
@@ -70,13 +70,12 @@ export default function CategoriesSection() {
 
         {/* Categories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category, index) => {
+          {categories.map((category) => {
             const Icon = category.icon;
             return (
               <div
                 key={category.id}
                 className="group cursor-pointer"
-                style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="relative overflow-hidden rounded-2xl bg-white p-8 h-full border border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                   {/* Gradient background */}
