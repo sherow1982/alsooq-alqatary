@@ -16,8 +16,8 @@ import Checkout from "./pages/Checkout";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import ReturnPolicy from "./pages/ReturnPolicy";
 
-// GitHub Pages base path
-const base = "/alsooq-alqatary";
+// Base path - use environment variable or default to GitHub Pages
+const base = import.meta.env.BASE_URL || "/alsooq-alqatary";
 
 function Router() {
   return (
