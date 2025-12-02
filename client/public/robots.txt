@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sherow1982.github.io/alsooq-alqatary/sitemap.xml
